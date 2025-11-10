@@ -11,6 +11,25 @@ for (let i = 1; i <= TOTAL_PHOTOS; i++) {
     photos.push(`photos/foto_${String(i).padStart(4, '0')}.webp`);
 }
 
+// YouTube Videos
+const videos = [
+    {
+        id: 'video_001',
+        title: 'De Niña a Grande',
+        youtubeId: 'mwaeWjgDrpg',
+        thumbnail: `https://img.youtube.com/vi/mwaeWjgDrpg/maxresdefault.jpg`
+    },
+    {
+        id: 'video_002',
+        title: 'Video de la Fiesta',
+        youtubeId: 'NsH0Y0w4DM8',
+        thumbnail: `https://img.youtube.com/vi/NsH0Y0w4DM8/maxresdefault.jpg`
+    }
+];
+
+// Combined items array (photos + videos)
+let items = [...photos, ...videos];
+
 // LIMITS FOR ALEXA'S XV AÑOS
 const LIMITS = {
     impresion: 100,    // Máximo 100 fotos para impresión
@@ -68,7 +87,7 @@ function getStats() {
         redes_sociales: 0,
         invitaciones_web: 0,
         descartada: 0,
-        sinClasificar: photos.length
+        sinClasificar: items.length
     };
 
     Object.values(photoSelections).forEach(selection => {
@@ -79,7 +98,7 @@ function getStats() {
         if (selection.descartada) stats.descartada++;
     });
 
-    stats.sinClasificar = photos.length - Object.keys(photoSelections).length;
+    stats.sinClasificar = items.length - Object.keys(photoSelections).length;
 
     return stats;
 }
@@ -214,14 +233,38 @@ function disableCanvasInteraction(canvas) {
 }
 
 // ========================================
+// HELPER FUNCTIONS
+// ========================================
+function isVideo(item) {
+    return typeof item === 'object' && item.youtubeId;
+}
+
+function getItemKey(index) {
+    const item = items[index];
+    if (isVideo(item)) {
+        return item.id;
+    }
+    return index;
+}
+
+function getItemDisplay(index) {
+    const item = items[index];
+    if (isVideo(item)) {
+        return `Video: ${item.title}`;
+    }
+    return `Foto ${index + 1}`;
+}
+
+// ========================================
 // GALLERY FUNCTIONS
 // ========================================
 function renderGallery() {
     const grid = document.getElementById('photosGrid');
     grid.innerHTML = '';
 
-    photos.forEach((photo, index) => {
-        const selection = photoSelections[index] || {};
+    items.forEach((item, index) => {
+        const itemKey = getItemKey(index);
+        const selection = photoSelections[itemKey] || {};
         const hasAny = selection.ampliacion || selection.impresion || selection.redes_sociales || selection.invitaciones_web || selection.descartada;
 
         const card = document.createElement('div');
@@ -257,11 +300,34 @@ function renderGallery() {
             badgesHTML += '</div>';
         }
 
+        // Determine content based on item type
+        let contentHTML = '';
+        let labelHTML = '';
+
+        if (isVideo(item)) {
+            // Video item
+            contentHTML = `
+                <div class="photo-image-container" style="position: relative;">
+                    <img src="${item.thumbnail}" alt="${item.title}" loading="lazy">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 20px rgba(0,0,0,0.8);">
+                        <i class="fab fa-youtube"></i>
+                    </div>
+                </div>
+            `;
+            labelHTML = `<div class="photo-number" style="background: #ff0000;"><i class="fab fa-youtube"></i> ${item.title}</div>`;
+        } else {
+            // Photo item
+            contentHTML = `
+                <div class="photo-image-container">
+                    <img src="${item}" alt="Foto ${index + 1}" loading="lazy">
+                </div>
+            `;
+            labelHTML = `<div class="photo-number">Foto ${index + 1}</div>`;
+        }
+
         card.innerHTML = `
-            <div class="photo-image-container">
-                <img src="${photo}" alt="Foto ${index + 1}" loading="lazy">
-            </div>
-            <div class="photo-number">Foto ${index + 1}</div>
+            ${contentHTML}
+            ${labelHTML}
             ${badgesHTML}
         `;
 
@@ -276,7 +342,8 @@ function renderGallery() {
 // FILTER FUNCTIONS
 // ========================================
 function isPhotoVisible(index) {
-    const selection = photoSelections[index] || {};
+    const itemKey = getItemKey(index);
+    const selection = photoSelections[itemKey] || {};
     let show = false;
 
     switch (currentFilter) {
@@ -333,7 +400,7 @@ function setFilter(filter) {
 function updateFilterButtons() {
     const stats = getStats();
 
-    document.getElementById('btnFilterAll').textContent = `Todas (${photos.length})`;
+    document.getElementById('btnFilterAll').textContent = `Todas (${items.length})`;
     document.getElementById('btnFilterAmpliacion').textContent = `Ampliación (${stats.ampliacion})`;
     document.getElementById('btnFilterImpresion').textContent = `Impresión (${stats.impresion})`;
     document.getElementById('btnFilterRedesSociales').textContent = `Redes Sociales (${stats.redes_sociales})`;
@@ -344,10 +411,10 @@ function updateFilterButtons() {
 
 function findNextVisiblePhoto(startIndex, direction) {
     let newIndex = startIndex;
-    const totalPhotos = photos.length;
+    const totalItems = items.length;
 
     if (direction === 'next') {
-        for (let i = startIndex + 1; i < totalPhotos; i++) {
+        for (let i = startIndex + 1; i < totalItems; i++) {
             if (isPhotoVisible(i)) {
                 return i;
             }
@@ -370,14 +437,64 @@ function openModal(index) {
     console.log(`Opening modal for index: ${index}, currentFilter: ${currentFilter}`);
     currentPhotoIndex = index;
     const modal = document.getElementById('photoModal');
-    const modalImage = document.getElementById('modalImage');
+    const modalImageContainer = document.querySelector('.modal-image-container');
     const modalPhotoNumber = document.getElementById('modalPhotoNumber');
+    const item = items[index];
+    const itemKey = getItemKey(index);
 
-    modalImage.src = photos[index];
-    modalPhotoNumber.textContent = `Foto ${index + 1}`;
+    // Clear previous content
+    modalImageContainer.innerHTML = '';
+
+    // Create content based on item type
+    if (isVideo(item)) {
+        // Video item - create YouTube iframe
+        const videoContainer = document.createElement('div');
+        videoContainer.style.position = 'relative';
+        videoContainer.style.paddingBottom = '56.25%'; // 16:9 aspect ratio
+        videoContainer.style.height = '0';
+        videoContainer.style.overflow = 'hidden';
+        videoContainer.style.borderRadius = '10px';
+
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.src = `https://www.youtube.com/embed/${item.youtubeId}`;
+        iframe.frameBorder = '0';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+
+        videoContainer.appendChild(iframe);
+        modalImageContainer.appendChild(videoContainer);
+
+        const numberDiv = document.createElement('div');
+        numberDiv.className = 'modal-photo-number';
+        numberDiv.style.background = '#ff0000';
+        numberDiv.innerHTML = `<i class="fab fa-youtube"></i> ${item.title}`;
+        modalImageContainer.appendChild(numberDiv);
+    } else {
+        // Photo item
+        const img = document.createElement('img');
+        img.id = 'modalImage';
+        img.src = item;
+        img.alt = `Foto ${index + 1}`;
+        img.style.width = '100%';
+        img.style.maxHeight = '70vh';
+        img.style.objectFit = 'contain';
+        img.style.borderRadius = '10px';
+
+        modalImageContainer.appendChild(img);
+
+        const numberDiv = document.createElement('div');
+        numberDiv.className = 'modal-photo-number';
+        numberDiv.textContent = `Foto ${index + 1}`;
+        modalImageContainer.appendChild(numberDiv);
+    }
 
     // Load current selections
-    const selection = photoSelections[index] || {};
+    const selection = photoSelections[itemKey] || {};
 
     document.querySelectorAll('.option-btn').forEach(btn => {
         const category = btn.dataset.category;
@@ -412,7 +529,8 @@ function updateNavigationButtons() {
 function hasUnsavedChanges() {
     if (currentPhotoIndex === null) return false;
 
-    const savedSelection = photoSelections[currentPhotoIndex] || {};
+    const itemKey = getItemKey(currentPhotoIndex);
+    const savedSelection = photoSelections[itemKey] || {};
     const currentSelection = {};
     document.querySelectorAll('.option-btn.selected').forEach(btn => {
         currentSelection[btn.dataset.category] = true;
@@ -443,20 +561,8 @@ function navigatePhoto(direction) {
         console.log(`findNextVisiblePhoto returned: ${newIndex}`);
 
         if (newIndex !== null) {
-            currentPhotoIndex = newIndex;
-            const modalImage = document.getElementById('modalImage');
-            const modalPhotoNumber = document.getElementById('modalPhotoNumber');
-
-            modalImage.src = photos[newIndex];
-            modalPhotoNumber.textContent = `Foto ${newIndex + 1}`;
-
-            const selection = photoSelections[newIndex] || {};
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                const category = btn.dataset.category;
-                btn.classList.toggle('selected', selection[category] === true);
-            });
-
-            updateNavigationButtons();
+            // Simply re-open modal with new index
+            openModal(newIndex);
         }
     };
 
@@ -493,6 +599,7 @@ function closeModal() {
 function saveModalSelection(callback) {
     if (currentPhotoIndex === null) return;
 
+    const itemKey = getItemKey(currentPhotoIndex);
     const selectedCategories = {};
     let hasAnySelection = false;
 
@@ -505,10 +612,10 @@ function saveModalSelection(callback) {
 
     // Only save if there's at least one selection
     if (hasAnySelection) {
-        photoSelections[currentPhotoIndex] = selectedCategories;
+        photoSelections[itemKey] = selectedCategories;
     } else {
         // Remove from selections if nothing is selected
-        delete photoSelections[currentPhotoIndex];
+        delete photoSelections[itemKey];
     }
 
     saveSelections();
@@ -532,25 +639,39 @@ function exportToJSON() {
         fecha_exportacion: new Date().toISOString(),
         evento: 'XV Años - Alisson Emireth',
         total_fotos: photos.length,
+        total_videos: videos.length,
         estadisticas: getStats(),
         selecciones: [],
         sugerencias_de_cambios: {
-            fotos: feedbackData.photos.length > 0 ? feedbackData.photos : 'Sin cambios sugeridos'
+            fotos: feedbackData.photos.length > 0 ? feedbackData.photos : 'Sin cambios sugeridos',
+            videos: feedbackData.videos && feedbackData.videos.length > 0 ? feedbackData.videos : 'Sin comentarios sobre videos'
         }
     };
 
-    photos.forEach((photo, index) => {
-        const selection = photoSelections[index];
+    items.forEach((item, index) => {
+        const itemKey = getItemKey(index);
+        const selection = photoSelections[itemKey];
         if (selection && (selection.ampliacion || selection.impresion || selection.redes_sociales || selection.invitaciones_web || selection.descartada)) {
-            exportData.selecciones.push({
-                numero_foto: index + 1,
-                archivo: photo,
+            const itemData = {
                 ampliacion: selection.ampliacion || false,
                 impresion: selection.impresion || false,
                 redes_sociales: selection.redes_sociales || false,
                 invitaciones_web: selection.invitaciones_web || false,
                 descartada: selection.descartada || false
-            });
+            };
+
+            if (isVideo(item)) {
+                itemData.tipo = 'video';
+                itemData.titulo = item.title;
+                itemData.youtube_id = item.youtubeId;
+                itemData.url = `https://youtu.be/${item.youtubeId}`;
+            } else {
+                itemData.tipo = 'foto';
+                itemData.numero_foto = index + 1;
+                itemData.archivo = item;
+            }
+
+            exportData.selecciones.push(itemData);
         }
     });
 
@@ -558,7 +679,7 @@ function exportToJSON() {
     const jsonText = JSON.stringify(exportData, null, 2);
 
     // Crear mensaje para WhatsApp
-    const message = `👑 SELECCIÓN DE FOTOS - XV AÑOS ALISSON EMIRETH\n\n${jsonText}`;
+    const message = `👑 SELECCIÓN DE FOTOS Y VIDEOS - XV AÑOS ALISSON EMIRETH\n\n${jsonText}`;
 
     // Codificar el mensaje para URL
     const encodedMessage = encodeURIComponent(message);
@@ -574,10 +695,11 @@ function exportToJSON() {
 
 function generateTextSummary() {
     const stats = getStats();
-    let summary = '👑 SELECCIÓN DE FOTOS - XV AÑOS ALISSON EMIRETH\n';
+    let summary = '👑 SELECCIÓN DE FOTOS Y VIDEOS - XV AÑOS ALISSON EMIRETH\n';
     summary += '═══════════════════════════════════════\n\n';
     summary += `📊 RESUMEN GENERAL:\n`;
     summary += `   Total de fotos: ${photos.length}\n`;
+    summary += `   Total de videos: ${videos.length}\n`;
     summary += `   🖼️  Para ampliación: ${stats.ampliacion}\n`;
     summary += `   📸 Para impresión: ${stats.impresion}\n`;
     summary += `   📱 Para redes sociales: ${stats.redes_sociales}\n`;
@@ -595,26 +717,43 @@ function generateTextSummary() {
     };
 
     categories.forEach(category => {
-        const photosInCategory = [];
-        photos.forEach((photo, index) => {
-            const selection = photoSelections[index];
+        const itemsInCategory = [];
+        items.forEach((item, index) => {
+            const itemKey = getItemKey(index);
+            const selection = photoSelections[itemKey];
             if (selection && selection[category]) {
-                photosInCategory.push(index + 1);
+                if (isVideo(item)) {
+                    itemsInCategory.push(`VIDEO: ${item.title} (https://youtu.be/${item.youtubeId})`);
+                } else {
+                    itemsInCategory.push(`Foto #${index + 1}`);
+                }
             }
         });
 
-        if (photosInCategory.length > 0) {
+        if (itemsInCategory.length > 0) {
             summary += `${categoryNames[category]}:\n`;
-            summary += `   Fotos: ${photosInCategory.join(', ')}\n`;
-            summary += `   Total: ${photosInCategory.length}\n\n`;
+            itemsInCategory.forEach(item => {
+                summary += `   - ${item}\n`;
+            });
+            summary += `   Total: ${itemsInCategory.length}\n\n`;
         }
     });
 
-    // Add feedback section
+    // Add feedback section for photos
     if (feedbackData.photos.length > 0) {
         summary += `\n💬 SUGERENCIAS DE CAMBIOS EN FOTOS:\n`;
         feedbackData.photos.forEach(item => {
             summary += `   📸 Foto #${item.photoNumber}: ${item.change}\n`;
+        });
+        summary += '\n';
+    }
+
+    // Add feedback section for videos
+    if (feedbackData.videos && feedbackData.videos.length > 0) {
+        summary += `\n🎥 COMENTARIOS SOBRE VIDEOS:\n`;
+        feedbackData.videos.forEach(item => {
+            const timestamp = item.timestamp ? ` [${item.timestamp}]` : '';
+            summary += `   📹 ${item.videoTitle}${timestamp}: ${item.comment}\n`;
         });
         summary += '\n';
     }
@@ -808,7 +947,8 @@ window.addEventListener('beforeunload', (e) => {
 // ========================================
 const FEEDBACK_KEY = 'alisson_xv_feedback';
 let feedbackData = {
-    photos: []
+    photos: [],
+    videos: []
 };
 
 // Load feedback from localStorage
@@ -817,6 +957,10 @@ function loadFeedback() {
         const saved = localStorage.getItem(FEEDBACK_KEY);
         if (saved) {
             feedbackData = JSON.parse(saved);
+            // Ensure videos array exists for backward compatibility
+            if (!feedbackData.videos) {
+                feedbackData.videos = [];
+            }
             renderFeedbackLists();
         }
     } catch (error) {
@@ -870,21 +1014,103 @@ function removePhotoFeedback(index) {
 // Render feedback lists
 function renderFeedbackLists() {
     const photoList = document.getElementById('photoFeedbackList');
+    const videoList = document.getElementById('videoFeedbackList');
 
-    if (!photoList) return;
-
-    // Render photo feedback
-    if (feedbackData.photos.length === 0) {
-        photoList.innerHTML = '<p style="color: rgba(250, 248, 243, 0.5); font-style: italic; margin: 10px 0; text-align: center;">No hay sugerencias de cambios</p>';
-    } else {
-        photoList.innerHTML = feedbackData.photos.map((item, index) => `
-            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.08); border-radius: 10px; margin-bottom: 10px; border: 1px solid rgba(212, 175, 55, 0.3);">
-                <span style="font-weight: 600; color: var(--gold); min-width: 70px; font-size: 1rem;"><i class="fas fa-camera"></i> #${item.photoNumber}</span>
-                <span style="flex: 1; color: var(--cream); font-size: 0.95rem;">${item.change}</span>
-                <button onclick="removePhotoFeedback(${index})" style="padding: 8px 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease;" onmouseover="this.style.background='#d32f2f'" onmouseout="this.style.background='#f44336'"><i class="fas fa-trash-alt"></i></button>
-            </div>
-        `).join('');
+    if (photoList) {
+        // Render photo feedback
+        if (feedbackData.photos.length === 0) {
+            photoList.innerHTML = '<p style="color: rgba(250, 248, 243, 0.5); font-style: italic; margin: 10px 0; text-align: center;">No hay sugerencias de cambios</p>';
+        } else {
+            photoList.innerHTML = feedbackData.photos.map((item, index) => `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.08); border-radius: 10px; margin-bottom: 10px; border: 1px solid rgba(212, 175, 55, 0.3);">
+                    <span style="font-weight: 600; color: var(--gold); min-width: 70px; font-size: 1rem;"><i class="fas fa-camera"></i> #${item.photoNumber}</span>
+                    <span style="flex: 1; color: var(--cream); font-size: 0.95rem;">${item.change}</span>
+                    <button onclick="removePhotoFeedback(${index})" style="padding: 8px 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease;" onmouseover="this.style.background='#d32f2f'" onmouseout="this.style.background='#f44336'"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            `).join('');
+        }
     }
+
+    if (videoList) {
+        // Render video feedback
+        if (!feedbackData.videos || feedbackData.videos.length === 0) {
+            videoList.innerHTML = '<p style="color: rgba(250, 248, 243, 0.5); font-style: italic; margin: 10px 0; text-align: center;">No hay comentarios sobre videos</p>';
+        } else {
+            videoList.innerHTML = feedbackData.videos.map((item, index) => `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255, 0, 0, 0.08); border-radius: 10px; margin-bottom: 10px; border: 1px solid rgba(255, 0, 0, 0.3);">
+                    <span style="font-weight: 600; color: #ff0000; min-width: 150px; font-size: 1rem;"><i class="fab fa-youtube"></i> ${item.videoTitle}</span>
+                    ${item.timestamp ? `<span style="color: var(--gold); font-weight: 600; min-width: 60px;"><i class="far fa-clock"></i> ${item.timestamp}</span>` : ''}
+                    <span style="flex: 1; color: var(--cream); font-size: 0.95rem;">${item.comment}</span>
+                    <button onclick="removeVideoFeedback(${index})" style="padding: 8px 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease;" onmouseover="this.style.background='#d32f2f'" onmouseout="this.style.background='#f44336'"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            `).join('');
+        }
+    }
+}
+
+// Add video feedback
+function addVideoFeedback() {
+    const videoSelect = document.getElementById('videoSelect');
+    const videoTimestamp = document.getElementById('videoTimestamp').value.trim();
+    const videoComment = document.getElementById('videoComment').value.trim();
+
+    if (!videoSelect.value) {
+        showToast('Por favor selecciona un video', 'error');
+        return;
+    }
+
+    if (!videoComment) {
+        showToast('Por favor agrega un comentario', 'error');
+        return;
+    }
+
+    if (!feedbackData.videos) {
+        feedbackData.videos = [];
+    }
+
+    feedbackData.videos.push({
+        videoTitle: videoSelect.value,
+        timestamp: videoTimestamp || null,
+        comment: videoComment
+    });
+
+    saveFeedback();
+    renderFeedbackLists();
+
+    // Clear inputs
+    videoSelect.value = '';
+    document.getElementById('videoTimestamp').value = '';
+    document.getElementById('videoComment').value = '';
+
+    showToast('Comentario de video agregado', 'success');
+}
+
+// Add video delivery preference
+function addVideoDeliveryPreference(videoTitle, delivery) {
+    if (!feedbackData.videos) {
+        feedbackData.videos = [];
+    }
+
+    feedbackData.videos.push({
+        videoTitle: videoTitle,
+        timestamp: null,
+        comment: `Solicito recibir este video en formato ${delivery} (DVD/USB)`
+    });
+
+    saveFeedback();
+    renderFeedbackLists();
+    showToast(`Preferencia de entrega agregada para "${videoTitle}"`, 'success');
+}
+
+// Remove video feedback
+function removeVideoFeedback(index) {
+    if (!feedbackData.videos) {
+        feedbackData.videos = [];
+    }
+    feedbackData.videos.splice(index, 1);
+    saveFeedback();
+    renderFeedbackLists();
+    showToast('Comentario eliminado', 'success');
 }
 
 // Load feedback on page load

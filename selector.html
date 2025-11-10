@@ -1011,14 +1011,74 @@
                         <i class="fas fa-plus"></i> Agregar
                     </button>
                 </div>
+            </div>
+        </section>
 
-                <div style="margin-top: 30px; padding: 20px; background: rgba(33, 150, 243, 0.1); border-left: 4px solid #2196f3; border-radius: 8px;">
-                    <p style="margin: 0; color: var(--cream); font-size: 0.95rem;">
-                        <strong style="color: var(--gold);"><i class="fas fa-mobile-alt"></i> Importante:</strong> Cuando presiones "Enviar Reporte", se abrirá WhatsApp automáticamente con tu selección lista para enviar al <strong style="color: var(--gold);">477-920-3776</strong>
-                    </p>
+        <!-- Video Feedback Section -->
+        <section class="feedback-section" style="background: rgba(255, 0, 0, 0.05); backdrop-filter: blur(10px); padding: 40px 30px; margin: 30px 0; border-radius: 15px; border: 1px solid rgba(255, 0, 0, 0.2);">
+            <h2 style="font-family: 'Playfair Display', serif; color: #ff0000; text-align: center; font-size: clamp(1.8rem, 5vw, 2.5rem); margin-bottom: 20px;"><i class="fab fa-youtube"></i> Comentarios sobre Videos</h2>
+            <p style="text-align: center; color: var(--cream); margin-bottom: 30px;">
+                Comenta sobre los videos: indica cambios específicos con timestamp (min:seg) o si prefieres recibir la película en físico
+            </p>
+
+            <div style="max-width: 900px; margin: 0 auto;">
+                <div id="videoFeedbackList" style="margin-bottom: 25px;"></div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <select
+                        id="videoSelect"
+                        style="flex: 0 0 200px; padding: 12px; border: 2px solid #ff0000; border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: var(--cream); font-size: 1rem;"
+                    >
+                        <option value="">Selecciona video...</option>
+                        <option value="De Niña a Grande">De Niña a Grande</option>
+                        <option value="Video de la Fiesta">Video de la Fiesta</option>
+                    </select>
+                    <input
+                        type="text"
+                        id="videoTimestamp"
+                        placeholder="Timestamp (ej: 2:45) - opcional"
+                        style="flex: 0 0 150px; padding: 12px; border: 2px solid #ff0000; border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: var(--cream); font-size: 1rem;"
+                    >
+                    <input
+                        type="text"
+                        id="videoComment"
+                        placeholder="Comentario o cambio sugerido..."
+                        style="flex: 1; min-width: 200px; padding: 12px; border: 2px solid #ff0000; border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: var(--cream); font-size: 1rem;"
+                    >
+                    <button
+                        onclick="addVideoFeedback()"
+                        style="padding: 12px 25px; background: #ff0000; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='#cc0000'"
+                        onmouseout="this.style.background='#ff0000'"
+                    >
+                        <i class="fas fa-plus"></i> Agregar
+                    </button>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button
+                        onclick="addVideoDeliveryPreference('De Niña a Grande', 'físico')"
+                        style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1); color: var(--cream); border: 2px solid #ff0000; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='rgba(255, 0, 0, 0.2)'"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'"
+                    >
+                        📀 "De Niña a Grande" en físico
+                    </button>
+                    <button
+                        onclick="addVideoDeliveryPreference('Video de la Fiesta', 'físico')"
+                        style="flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.1); color: var(--cream); border: 2px solid #ff0000; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='rgba(255, 0, 0, 0.2)'"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'"
+                    >
+                        📀 "Video de la Fiesta" en físico
+                    </button>
                 </div>
             </div>
         </section>
+
+        <div style="max-width: 900px; margin: 30px auto; padding: 20px; background: rgba(33, 150, 243, 0.1); border-left: 4px solid #2196f3; border-radius: 8px;">
+            <p style="margin: 0; color: var(--cream); font-size: 0.95rem;">
+                <strong style="color: var(--gold);"><i class="fas fa-mobile-alt"></i> Importante:</strong> Cuando presiones "Enviar Reporte", se abrirá WhatsApp automáticamente con tu selección lista para enviar al <strong style="color: var(--gold);">477-920-3776</strong>
+            </p>
+        </div>
     </div>
 
     <!-- Footer -->
