@@ -27,8 +27,9 @@ const videos = [
     }
 ];
 
-// Combined items array (photos + videos)
-let items = [...photos, ...videos];
+// Keep videos and photos separate for rendering
+// Items array for navigation includes both (videos first, then photos)
+let items = [...videos, ...photos];
 
 // LIMITS FOR ALEXA'S XV AÑOS
 const LIMITS = {
@@ -70,6 +71,7 @@ function clearAllSelections() {
     if (confirm('¿Estás segura de que quieres borrar TODAS las selecciones? Esta acción no se puede deshacer.')) {
         photoSelections = {};
         saveSelections();
+        renderVideos();
         renderGallery();
         updateStats();
         updateFilterButtons();
@@ -258,18 +260,75 @@ function getItemDisplay(index) {
 // ========================================
 // GALLERY FUNCTIONS
 // ========================================
+function renderVideos() {
+    const videosContainer = document.getElementById('videosContainer');
+    if (!videosContainer) return;
+
+    videosContainer.innerHTML = '';
+
+    videos.forEach((video, videoIndex) => {
+        const itemIndex = videoIndex; // Videos are at the start of items array
+        const itemKey = getItemKey(itemIndex);
+        const selection = photoSelections[itemKey] || {};
+        const hasAny = selection.ampliacion || selection.impresion || selection.redes_sociales || selection.invitaciones_web || selection.descartada;
+
+        // Build badges HTML
+        let badgesHTML = '';
+        if (hasAny) {
+            badgesHTML = '<div class="video-card-badges">';
+            if (selection.ampliacion) badgesHTML += '<span class="badge ampliacion"><i class="fas fa-image"></i> Ampliación</span>';
+            if (selection.impresion) badgesHTML += '<span class="badge impresion"><i class="fas fa-camera"></i> Impresión</span>';
+            if (selection.redes_sociales) badgesHTML += '<span class="badge redes_sociales"><i class="fas fa-share-alt"></i> Redes Sociales</span>';
+            if (selection.invitaciones_web) badgesHTML += '<span class="badge invitaciones_web"><i class="fas fa-globe"></i> Invitaciones Web</span>';
+            if (selection.descartada) badgesHTML += '<span class="badge descartada"><i class="fas fa-times-circle"></i> Descartada</span>';
+            badgesHTML += '</div>';
+        }
+
+        const videoCard = document.createElement('div');
+        videoCard.className = 'video-card';
+        videoCard.innerHTML = `
+            <div class="video-card-header">
+                <h3 class="video-card-title">
+                    <i class="fab fa-youtube"></i>
+                    ${video.title}
+                </h3>
+                <button
+                    onclick="openModal(${itemIndex})"
+                    class="btn btn-filter"
+                    style="padding: 10px 20px; font-size: 0.9rem;"
+                >
+                    <i class="fas fa-cog"></i> Opciones
+                </button>
+            </div>
+            <div class="video-iframe-container">
+                <iframe
+                    src="https://www.youtube.com/embed/${video.youtubeId}"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                ></iframe>
+            </div>
+            ${badgesHTML}
+        `;
+
+        videosContainer.appendChild(videoCard);
+    });
+}
+
 function renderGallery() {
     const grid = document.getElementById('photosGrid');
     grid.innerHTML = '';
 
-    items.forEach((item, index) => {
-        const itemKey = getItemKey(index);
+    // Render only photos (videos are rendered separately)
+    photos.forEach((photo, photoIndex) => {
+        const itemIndex = videos.length + photoIndex; // Photos come after videos in items array
+        const itemKey = getItemKey(itemIndex);
         const selection = photoSelections[itemKey] || {};
         const hasAny = selection.ampliacion || selection.impresion || selection.redes_sociales || selection.invitaciones_web || selection.descartada;
 
         const card = document.createElement('div');
         card.className = 'photo-card';
-        card.dataset.index = index;
+        card.dataset.index = itemIndex;
 
         // Add category classes
         if (selection.descartada) {
@@ -300,38 +359,15 @@ function renderGallery() {
             badgesHTML += '</div>';
         }
 
-        // Determine content based on item type
-        let contentHTML = '';
-        let labelHTML = '';
-
-        if (isVideo(item)) {
-            // Video item
-            contentHTML = `
-                <div class="photo-image-container" style="position: relative;">
-                    <img src="${item.thumbnail}" alt="${item.title}" loading="lazy">
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 20px rgba(0,0,0,0.8);">
-                        <i class="fab fa-youtube"></i>
-                    </div>
-                </div>
-            `;
-            labelHTML = `<div class="photo-number" style="background: #ff0000;"><i class="fab fa-youtube"></i> ${item.title}</div>`;
-        } else {
-            // Photo item
-            contentHTML = `
-                <div class="photo-image-container">
-                    <img src="${item}" alt="Foto ${index + 1}" loading="lazy">
-                </div>
-            `;
-            labelHTML = `<div class="photo-number">Foto ${index + 1}</div>`;
-        }
-
         card.innerHTML = `
-            ${contentHTML}
-            ${labelHTML}
+            <div class="photo-image-container">
+                <img src="${photo}" alt="Foto ${photoIndex + 1}" loading="lazy">
+            </div>
+            <div class="photo-number">Foto ${photoIndex + 1}</div>
             ${badgesHTML}
         `;
 
-        card.addEventListener('click', () => openModal(index));
+        card.addEventListener('click', () => openModal(itemIndex));
         grid.appendChild(card);
     });
 
@@ -619,6 +655,7 @@ function saveModalSelection(callback) {
     }
 
     saveSelections();
+    renderVideos();
     renderGallery();
     updateStats();
     updateFilterButtons();
@@ -805,12 +842,14 @@ function showToast(message, type = 'success') {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎬 Iniciando selector de fotos - Alisson Emireth XV Años');
     console.log(`📸 Total de fotos: ${TOTAL_PHOTOS}`);
+    console.log(`🎥 Total de videos: ${videos.length}`);
 
     // Load saved selections
     loadSelections();
     console.log('✅ Selecciones cargadas:', Object.keys(photoSelections).length);
 
-    // Render gallery
+    // Render videos and gallery
+    renderVideos();
     renderGallery();
 
     // Update stats
@@ -1162,6 +1201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 saveSelections();
+                renderVideos();
                 renderGallery();
                 updateStats();
                 updateFilterButtons();
@@ -1224,6 +1264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveFeedback();
                 saveSelections();
                 renderFeedbackLists();
+                renderVideos();
                 renderGallery();
                 updateStats();
                 updateFilterButtons();
