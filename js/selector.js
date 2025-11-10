@@ -8,7 +8,7 @@ const STORAGE_KEY = 'alisson_xv_photo_selections';
 // Generate photo paths (foto0001.webp to foto00246.webp)
 let photos = [];
 for (let i = 1; i <= TOTAL_PHOTOS; i++) {
-    photos.push(`photos/foto${String(i).padStart(4, '0')}.webp`);
+    photos.push(`photos/foto_${String(i).padStart(4, '0')}.webp`);
 }
 
 // LIMITS FOR ALEXA'S XV AÑOS
