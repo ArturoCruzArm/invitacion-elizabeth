@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Selector de Fotos - XV Años Alisson Emireth</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- <link rel="icon" type="image/svg+xml" href="favicon.svg"> -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
@@ -82,7 +82,7 @@
 
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(1100px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
         }
@@ -237,7 +237,7 @@
         }
 
         .badge.invitaciones_web {
-            background: #ff91000;
+            background: #ff9100;
         }
 
         .badge.descartada {
@@ -365,7 +365,7 @@
 
         .option-buttons {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(1100px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
         }
@@ -612,6 +612,48 @@
                 width: 200px;
             }
 
+            .header {
+                padding: 30px 15px;
+            }
+
+            .main-title {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.5rem;
+            }
+
+            .control-panel {
+                padding: 20px 15px;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-icon {
+                font-size: 1.5rem;
+            }
+
+            .stat-count {
+                font-size: 1.5rem;
+            }
+
+            .action-buttons {
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
+            }
+
             .photos-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                 gap: 10px;
@@ -621,20 +663,76 @@
                 height: 200px;
             }
 
+            .modal-content {
+                width: 98%;
+                max-height: 98vh;
+            }
+
             .modal-nav {
                 font-size: 2rem;
                 padding: 15px 10px;
             }
 
+            .modal-options {
+                padding: 20px;
+            }
+
             .option-buttons {
                 grid-template-columns: 1fr;
             }
+
+            .option-btn {
+                padding: 15px;
+            }
+
+            .option-icon {
+                font-size: 2rem;
+            }
         }
 
-        @media (max-width: 4100px) {
+        @media (max-width: 480px) {
             .rose-decoration.top-left,
             .rose-decoration.bottom-right {
                 width: 150px;
+            }
+
+            .main-title {
+                font-size: 1.75rem;
+            }
+
+            .subtitle {
+                font-size: 1.25rem;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .photos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 8px;
+            }
+
+            .photo-card img {
+                height: 150px;
+            }
+
+            .modal-nav {
+                font-size: 1.5rem;
+                padding: 12px 8px;
+            }
+
+            .modal-close {
+                font-size: 2rem;
+                top: 10px;
+                right: 15px;
+            }
+
+            .toast {
+                bottom: 15px;
+                right: 15px;
+                left: 15px;
+                font-size: 0.9rem;
             }
         }
 
@@ -886,6 +984,7 @@
 </head>
 <body>
     <!-- Fixed Rose Decorations -->
+    <!-- Commented out - images not found
     <div class="fixed-roses">
         <div class="rose-decoration top-left">
             <img src="rosa-izquierda.png" alt="" aria-hidden="true">
@@ -894,6 +993,7 @@
             <img src="rosa-derecha.png" alt="" aria-hidden="true">
         </div>
     </div>
+    -->
 
     <div class="container">
         <!-- Header -->
